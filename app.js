@@ -1,4 +1,4 @@
-require ("dotenv"). config();
+const dotEnv = require("dotenv");
 const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
@@ -6,10 +6,10 @@ const mongoose = require("mongoose");
 const { log } = require("console");
 const session = require("express-session");
 const passport = require("passport");
-const passportLocalMongoose = require("passport-local-mongoose");
-
-
+const passportLocalMongoose = require("passport-local-mongoose")
 const app = express();
+
+dotEnv.config()
 
 app.use(express.static("public"));
 app.set('view engine', 'ejs');
@@ -27,7 +27,7 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-mongoose.connect("mongodb://localhost:27017/userDB");
+mongoose.connect(process.env.MongoDBString);
 
 const userSchema = new mongoose.Schema({
     email: String,
