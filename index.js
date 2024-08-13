@@ -77,7 +77,9 @@ app.get("/submit", function(req, res) {
 
 
 app.get(["/project_tables", "/project_cards"], function(req, res) {
-  User.find({ "project": { $ne: null } })
+
+  if (req.isAuthenticated()) {
+     User.find({ "project": { $ne: null } })
     .then(function(foundUsers) {
       if (req.url === "/project_tables") {
         // Render users in table format
@@ -94,19 +96,26 @@ app.get(["/project_tables", "/project_cards"], function(req, res) {
       console.error(err);
       res.status(500).send("Internal Server Error");
     });
+  } else {
+    res.redirect("/login");
+  }
 });
 
 
-  
 app.get("/logout", function(req, res) {
-    req.logout(function(err) {
-      if (err) {
-        console.log(err);
-      }
-    });
-    res.redirect("/");
+  req.session.destroy((err) => {
+    if (err) {
+      console.error('Error destroying session:', err);
+      res.clearCookie('connect.sid'); // This clears the session cookie
+      res.status(500).send('Failed to log out');
+    } else {
+      console.log('you have logged off');
+      res.render('logout_confirmed');
+    }
   });
-   
+     });
+
+
   app.get("/edit/:id", function(req, res) {
     User.findById(req.params.id)
       .then(foundUser => {
@@ -217,7 +226,10 @@ app.post("/submit", function (req, res) {
       });
   });
   
-  
+app.post('/logout', (req, res) => {
+       req.session.destroy();
+        res.render('logout_confirmed');
+       });
 
   
 // app.listen(3000, function() {
