@@ -1,3 +1,4 @@
+require ("dotenv"). config();
 const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
@@ -5,7 +6,6 @@ const mongoose = require("mongoose");
 const { log } = require("console");
 const session = require("express-session");
 const passport = require("passport");
-require('dotenv').config();
 const passportLocalMongoose = require("passport-local-mongoose");
 
 
@@ -27,14 +27,7 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// mongoose.connect("mongodb://localhost:27017/userDB");
-// mongoose.connect(process.env.MongoDBString , { useNewUrlParser: true, useUnifiedTopology: true })
-//   .then(() => console.log('Connected to MongoDB...'))
-//   .catch(err => console.error('Could not connect to MongoDB...', err));
-
- mongoose.connect('mongodb://mongo:Fg6Be6eEg5fH3532AE6hB5GE3FF5dDg-@mongodb.railway.internal:27017', { useNewUrlParser: true, useUnifiedTopology: true })
-   .then(() => console.log('Connected to MongoDB...'))
-   .catch(err => console.error('Could not connect to MongoDB...', err));
+mongoose.connect(process.env.MongoDBString);
 
 
 const userSchema = new mongoose.Schema({
@@ -57,16 +50,16 @@ passport.deserializeUser(User.deserializeUser());
 app.get("/", function(req, res) {
     res.render("register");
   });
-   
+
 app.get("/login", function(req, res) {
     res.render("login");
   });
-   
+
 app.get("/register", function(req, res) {
     res.render("register");
   });
-   
     
+
 app.get("/submit", function(req, res) {
     if (req.isAuthenticated()) {
       res.render("submit");
@@ -78,8 +71,7 @@ app.get("/submit", function(req, res) {
 
 app.get(["/project_tables", "/project_cards"], function(req, res) {
 
-  if (req.isAuthenticated()) {
-     User.find({ "project": { $ne: null } })
+  User.find({ "project": { $ne: null } })
     .then(function(foundUsers) {
       if (req.url === "/project_tables") {
         // Render users in table format
@@ -96,9 +88,6 @@ app.get(["/project_tables", "/project_cards"], function(req, res) {
       console.error(err);
       res.status(500).send("Internal Server Error");
     });
-  } else {
-    res.redirect("/login");
-  }
 });
 
 
@@ -114,6 +103,21 @@ app.get("/logout", function(req, res) {
     }
   });
      });
+// app.get("/logout", function(req, res) {
+
+//     req.logout(function(err) {
+
+//       if (err) {
+
+//         console.log(err);
+
+//       }
+
+//     });
+
+//     res.redirect("/");
+
+//   });
 
 
   app.get("/edit/:id", function(req, res) {
@@ -129,33 +133,33 @@ app.get("/logout", function(req, res) {
         console.log(err);
         res.status(500).send("Internal Server Error");
       });
-  });
-  
-          
-   app.get("/delete/:id", function(req, res) {
-     const userId = req.params.id;
- 
-     // Validate user ID (optional)
+  });        
+
+  app.get("/delete/:id", function(req, res) {
+
+    const userId = req.params.id;
+
+    // Validate user ID (optional)
     if (!mongoose.Types.ObjectId.isValid(userId)) {
-       return res.status(400).send("Invalid user ID format");
+      return res.status(400).send("Invalid user ID format");
     }
  
-     User.findByIdAndDelete(userId)
+
+    User.findByIdAndDelete(userId)
       .then(deletedUser => {
-         if (!deletedUser) {
-           return res.status(404).send("User not found");
-         }
-         res.send("Project deleted successfully");
-       })
-       .catch(err => {
-         console.error(err);
-         res.status(500).send("Internal Server Error");
-       });
-   });   
- 
-   
+        if (!deletedUser) {
+          return res.status(404).send("User not found");
+        }
+        res.send("Project deleted successfully");
+      })
+      .catch(err => {
+        console.error(err);
+        res.status(500).send("Internal Server Error");
+      });
+  });   
+
 app.post("/register", function(req, res) {
-   
+
     User.register({username: req.body.username}, req.body.password, function(err, user) {
       if (err) {
         console.log(err);
@@ -170,12 +174,14 @@ app.post("/register", function(req, res) {
   });
    
 app.post("/login", function(req, res) {
-   
+
+
     const user = new User({
       username: req.body.username,
       password: req.body.password
     });
-   
+
+
     req.login(user, function(err) {
       if (err) {
         console.log(err);
@@ -186,9 +192,8 @@ app.post("/login", function(req, res) {
    
       }
     });
-   
   });
-  
+
 
 app.post("/submit", function (req, res) {
     console.log(req.user);
@@ -210,7 +215,7 @@ app.post("/submit", function (req, res) {
         console.log(err);
       });
   });
-   
+
   app.post("/update/:id", function(req, res) {
     User.findByIdAndUpdate(req.params.id, req.body, { new: true })
       .then(updatedUser => {
@@ -225,24 +230,52 @@ app.post("/submit", function (req, res) {
         res.status(500).send("Internal Server Error");
       });
   });
-  
-app.post('/logout', (req, res) => {
-       req.session.destroy();
-        res.render('logout_confirmed');
-       });
 
-  
-// app.listen(3000, function() {
-//    console.log("Server on Port 3000...");
-//  });
+  app.post('/logout', (req, res) => {
+    req.session.destroy();
 
+     res.render('logout_confirmed');
 
-const port = process.env.PORT || 3000;
-// Listen on `port` and 0.0.0.0
-app.listen(port, "0.0.0.0", function () {
-  // ...
-});
+    });
 
+  // app.delete("/project/:id", function(req, res) {
 
+  //    const userId = req.params.userId;
 
+  //    // Validate user ID (optional)
 
+  //    if (!mongoose.Types.ObjectId.isValid(userId)) {
+
+  //      return res.status(400).send("Invalid user ID format");
+
+  //    }
+
+  //    User.findByIdAndDelete(userId)
+
+  //      .then(deletedUser => {
+
+  //        if (!deletedUser) {
+
+  //          return res.status(404).send("User not found");
+
+  //        }
+
+  //        res.send("Project deleted successfully");
+
+  //      })
+
+  //      .catch(err => {
+
+  //        console.error(err);
+
+  //        res.status(500).send("Internal Server Error");
+
+  //      });
+
+  //  });
+
+app.listen(3000, function() {
+
+    console.log("Server on Port 3000...");
+
+  });
